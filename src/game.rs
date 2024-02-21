@@ -121,7 +121,7 @@ pub fn game(
 
                             if new_map.iter().all(|&v| v == 0) {
                                 winner.set(Some(*curr_player));
-                                Timeout::new(2000, move || onend.emit(*curr_player)).forget();
+                                Timeout::new(1500, move || onend.emit(*curr_player)).forget();
                             } else {
                                 curr_player.set(*curr_player ^ 1);
                                 curr_stage.set(Stage::Waiting);

@@ -24,6 +24,16 @@ body {
   position: absolute;
   right: 10px;
   top: 2px;
+  z-index: 999;
+  animation: 0.75s ease-out fly-from-center;
+}
+
+@keyframes fly-from-center {
+  from {
+    right: 50%;
+    top: 50%;
+    transform: scale(4);
+  }
 }
 
 .game-main {
