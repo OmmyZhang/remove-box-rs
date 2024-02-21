@@ -149,18 +149,16 @@ pub fn game(
         <div class="game-container">
             <h1>
                 {
-                    format!(
-                        "Player {} ({})",
-                        *curr_player + 1, players[*curr_player as usize].intro()
-                    )
+                    if let Some(winner) = winner.as_ref() {
+                        format!("Player {} wins!", winner + 1)
+                    } else {
+                        format!(
+                            "Player {} ({})",
+                            *curr_player + 1, players[*curr_player as usize].intro()
+                        )
+                    }
                 }
             </h1>
-            if let Some(winner) = winner.as_ref() {
-                <div class="result-box">
-                    { format!("Player {} wins!", winner + 1) }
-                </div>
-                <div></div>
-            } else {
             <div class="map">
                 {
                     (0..calc.borrow().max_height).map(|j| {
@@ -200,7 +198,6 @@ pub fn game(
                     }).collect::<Html>()
                 }
             </div>
-            }
         </div>
     }
 }
