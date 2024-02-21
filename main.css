@@ -87,9 +87,9 @@ body {
   height: 100vh;
   background: linear-gradient(
     45deg,
-    #604030d0 calc(50% - 1px),
-    #000000d0 calc(50%),
-    #604030d0 calc(50% + 1px)
+    #544030e0 calc(50% - 1px),
+    #000000e0 calc(50%),
+    #544030e0 calc(50% + 1px)
   );
   background-size: 5px 6px;
 }
