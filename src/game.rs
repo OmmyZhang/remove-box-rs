@@ -2,7 +2,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gloo_timers::callback::Timeout;
-use yew::{classes, function_component, html, use_effect_with, use_state, Callback, Html};
+use yew::{
+    classes, function_component, html, use_effect_with, use_mut_ref, use_state, Callback, Html,
+};
 use yew_autoprops::autoprops;
 
 use crate::calc::Calc;
@@ -41,6 +43,8 @@ pub fn game(
     let no_hint = use_state(|| false);
 
     let history = use_state(Vec::new);
+
+    let onend_timeout = use_mut_ref(|| None);
 
     // 点击格子
     let onclick = {
@@ -100,6 +104,7 @@ pub fn game(
                             onend,
                             no_hint,
                             history,
+                            onend_timeout,
                         ];
                         Timeout::new(500, move || {
                             chosen_range.set(None);
@@ -121,7 +126,9 @@ pub fn game(
 
                             if new_map.iter().all(|&v| v == 0) {
                                 winner.set(Some(*curr_player));
-                                Timeout::new(1500, move || onend.emit(*curr_player)).forget();
+                                // 如果整个game销毁，这个timeout需要被取消
+                                *onend_timeout.borrow_mut() =
+                                    Some(Timeout::new(1500, move || onend.emit(*curr_player)));
                             } else {
                                 curr_player.set(*curr_player ^ 1);
                                 curr_stage.set(Stage::Waiting);
