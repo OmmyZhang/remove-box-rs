@@ -1,24 +1,28 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use gloo_console::log;
 use gloo_timers::callback::Timeout;
 use yew::{classes, function_component, html, use_effect_with, use_state, Callback, Html};
 use yew_autoprops::autoprops;
 
 use crate::calc::Calc;
+use crate::cards::Cards;
 use crate::clone_all;
 use crate::types::{Mode, Role, Stage};
 
 #[autoprops]
 #[function_component(Game)]
 pub fn game(
-    players: &[Role; 2],
+    players: [Role; 2],
     init_map: Rc<Vec<usize>>,
     calc: Rc<RefCell<Calc>>,
     onend: Callback<u8>,
-    mode: &Mode,
-    level: &usize,
+    mode: Mode,
+    level: usize,
+    n_hint: u32,
+    n_undo: u32,
+    use_hint: Callback<()>,
+    use_undo: Callback<()>,
 ) -> Html {
     let curr_player = use_state(|| 0_u8);
     let curr_stage = use_state(|| Stage::Waiting);
@@ -34,10 +38,13 @@ pub fn game(
 
     let winner = use_state(|| None);
 
+    let no_hint = use_state(|| false);
+
+    let history = use_state(Vec::new);
+
     // 点击格子
     let onclick = {
         clone_all![
-            players,
             curr_player,
             curr_stage,
             map,
@@ -47,11 +54,11 @@ pub fn game(
             chosen_state,
             last_remove_line,
             winner,
+            no_hint,
+            history,
         ];
         Callback::from(
             move |(i, j, i2j2): (usize, usize, Option<(usize, usize)>)| {
-                log!(i, j, format!("{:?}, stage: {:?}", i2j2, *curr_stage));
-
                 if i2j2.is_none() && players[*curr_player as usize] != Role::Local {
                     return;
                 }
@@ -70,6 +77,7 @@ pub fn game(
 
                 if let Some((i, j)) = i2j2 {
                     pressed2.set(Some((i, j)));
+                    curr_stage.set(Stage::Press2);
                     let start_i = usize::min(i1j1.0, i);
                     let end_i = usize::max(i1j1.0, i);
 
@@ -90,6 +98,8 @@ pub fn game(
                             last_remove_line,
                             winner,
                             onend,
+                            no_hint,
+                            history,
                         ];
                         Timeout::new(500, move || {
                             chosen_range.set(None);
@@ -117,6 +127,10 @@ pub fn game(
                                 curr_stage.set(Stage::Waiting);
                             }
                             map.set(new_map);
+                            let mut new_history = (*history).clone();
+                            new_history.push((start_i, end_i, max_j - min_j + 1));
+                            history.set(new_history);
+                            no_hint.set(false);
                         })
                         .forget();
                     } else {
@@ -136,24 +150,88 @@ pub fn game(
     };
 
     {
-        clone_all![curr_stage, curr_player, players, map, calc, onclick, level];
+        clone_all![curr_stage, curr_player, map, calc, onclick, level];
         use_effect_with(*curr_stage, move |&stage| {
             if players[*curr_player as usize] == Role::AI && stage == Stage::Waiting {
-                let (i1, i2, j1, j2) = calc.borrow_mut().play(
-                    &map,
-                    level as f64 / 10.0 + 0.max(10 - map.iter().sum::<usize>()) as f64 / 10.0,
-                );
-                log!(i1, i2, j1, j2);
+                let (i1, i2, j1, j2) = calc
+                    .borrow_mut()
+                    .play(
+                        &map,
+                        level as f64 / 10.0 + 0.max(10 - map.iter().sum::<usize>()) as f64 / 10.0,
+                    )
+                    .0;
 
                 Timeout::new(1000, move || onclick.emit((i1, j1, Some((i2, j2))))).forget();
             };
         });
     }
 
+    let use_hint = {
+        clone_all![
+            map,
+            curr_player,
+            curr_stage,
+            calc,
+            chosen_range,
+            chosen_state,
+            no_hint
+        ];
+        use_hint.filter_reform(move |()| {
+            ((*curr_stage == Stage::Waiting || *curr_stage == Stage::Press1)
+                && players[*curr_player as usize] == Role::Local)
+                .then(|| {
+                    let (play, can_win) = calc.borrow_mut().play(&map, 1.0);
+                    if can_win {
+                        chosen_range.set(Some(play));
+                        chosen_state.set("hint");
+                    } else {
+                        no_hint.set(true);
+                    }
+                })
+        })
+    };
+
+    let use_undo = {
+        clone_all![
+            map,
+            curr_player,
+            curr_stage,
+            no_hint,
+            history,
+            pressed1,
+            pressed2,
+            last_remove_line,
+            chosen_range,
+        ];
+        use_undo.filter_reform(move |()| {
+            // 注意不能是then_some
+            // 注意可能AI先手，len是1
+            (history.len() >= 2 && players[*curr_player as usize] == Role::Local).then(|| {
+                curr_stage.set(Stage::Waiting);
+                pressed1.set(None);
+                pressed2.set(None);
+                last_remove_line.set(None);
+                chosen_range.set(None);
+                no_hint.set(false);
+
+                let mut new_history = (*history).clone();
+                let mut new_map = (*map).clone();
+                for _ in 0..2 {
+                    let (i1, i2, j) = new_history.pop().unwrap();
+                    for it in new_map.iter_mut().take(i2 + 1).skip(i1) {
+                        *it += j;
+                    }
+                }
+                history.set(new_history);
+                map.set(new_map);
+            })
+        })
+    };
+
     html! {
         <div class="game-container">
-            if *mode == Mode::Pve {
-                <div class="level">{ format!("Level {}", *level) }</div>
+            if mode == Mode::Pve {
+                <div class="level">{ format!("Level {}", level) }</div>
             }
             <h1>
                 {
@@ -167,7 +245,11 @@ pub fn game(
                     }
                 }
             </h1>
-            <div class="map">
+            <div class="game-main">
+                if mode == Mode::Pve {
+                    <Cards {n_hint} {n_undo} no_hint={*no_hint} {use_hint} {use_undo} />
+                }
+                <div class="map">
                 {
                     (0..calc.borrow().max_height).map(|j| {
                         html! {
@@ -205,6 +287,7 @@ pub fn game(
                         }
                     }).collect::<Html>()
                 }
+                </div>
             </div>
         </div>
     }

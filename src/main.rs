@@ -1,3 +1,4 @@
+use web_sys::window;
 use yew::{function_component, html, use_memo, use_mut_ref, use_state, Callback, Html, Renderer};
 
 use calc::Calc;
@@ -6,11 +7,15 @@ use gloo_console::log;
 use types::{Mode, Role};
 
 mod calc;
+mod cards;
 mod game;
 mod types;
 
 const WIDTH: usize = 7;
 const HEIGHT: usize = 8;
+
+const N_HINT: u32 = 10;
+const N_UNDO: u32 = 20;
 
 macro_rules! clone_all {
     [$($s:ident), * $(,)?] => {
@@ -30,6 +35,9 @@ fn app() -> Html {
     let init_map = use_memo((*level, *mode), |(level, _)| {
         calc.borrow().gen_map(WIDTH.min(*level / 2 + 2))
     });
+
+    let n_hint = use_state(|| 0);
+    let n_undo = use_state(|| 0);
 
     let status = calc.borrow().encode_map(&init_map);
     let first_can_win = calc.borrow_mut().check_can_win(status);
@@ -59,7 +67,13 @@ fn app() -> Html {
                         level.set(*level + 1);
                     } else {
                         mode.set(Mode::Home);
-                        // TODO
+                        if *level > 1 {
+                            let user_name = window()
+                                .unwrap()
+                                .prompt_with_message(&format!("Level {}!\nYour name:", *level - 1))
+                                .unwrap();
+                            log!(user_name);
+                        }
                     }
                 }
                 Mode::Online => {
@@ -68,6 +82,16 @@ fn app() -> Html {
                 }
             }
         })
+    };
+
+    let use_hint = {
+        clone_all![n_hint];
+        Callback::from(move |()| n_hint.set(*n_hint - 1))
+    };
+
+    let use_undo = {
+        clone_all![n_undo];
+        Callback::from(move |()| n_undo.set(*n_undo - 1))
     };
 
     html! {
@@ -80,15 +104,21 @@ fn app() -> Html {
                 {onend}
                 mode={*mode}
                 level={*level}
+                n_hint={*n_hint}
+                n_undo={*n_undo}
+                {use_hint}
+                {use_undo}
             />
             if *mode == Mode::Home {
                 <div class="home-mask">
                     <div class="home-buttons">
                         <button onclick={{
-                            clone_all![mode, level];
+                            clone_all![mode, level, n_hint, n_undo];
                             Callback::from(move |_| {
                                 mode.set(Mode::Pve);
                                 level.set(1);
+                                n_hint.set(N_HINT);
+                                n_undo.set(N_UNDO);
                             })
                         }}>
                             { "Play vs AI" }

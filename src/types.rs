@@ -1,3 +1,5 @@
+use yew::html::ImplicitClone;
+
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Role {
     Local,
@@ -29,3 +31,6 @@ pub enum Mode {
     Pvp,
     Online,
 }
+
+impl ImplicitClone for Role {}
+impl ImplicitClone for Mode {}

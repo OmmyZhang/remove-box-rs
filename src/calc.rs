@@ -1,4 +1,3 @@
-use gloo_console::log;
 use rand::{distributions::Uniform, Rng};
 
 #[derive(Debug, PartialEq)]
@@ -104,14 +103,20 @@ impl Calc {
         }
     }
 
-    // return (i1, i2, j1, j2)
-    pub fn play(&mut self, map: &[usize], difficulty: f64) -> (usize, usize, usize, usize) {
+    // return ((i1, i2, j1, j2), can_win)
+    pub fn play(&mut self, map: &[usize], difficulty: f64) -> ((usize, usize, usize, usize), bool) {
         let status = self.encode_map(map);
 
         if rand::random::<f64>() > difficulty || !self.check_can_win(status) {
-            self.get_how_to_play(status, PlayMode::Random).unwrap()
+            (
+                self.get_how_to_play(status, PlayMode::Random).unwrap(),
+                false,
+            )
         } else {
-            self.get_how_to_play(status, PlayMode::Operate).unwrap()
+            (
+                self.get_how_to_play(status, PlayMode::Operate).unwrap(),
+                true,
+            )
         }
     }
 }
