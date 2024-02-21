@@ -55,7 +55,7 @@ fn app() -> Html {
                 Mode::Home => level.set((*level + 1) % 20),
                 Mode::Pvp => mode.set(Mode::Home),
                 Mode::Pve => {
-                    if winner == 0 {
+                    if players[winner as usize] == Role::Local {
                         level.set(*level + 1);
                     } else {
                         mode.set(Mode::Home);
@@ -78,6 +78,8 @@ fn app() -> Html {
                 {init_map}
                 {calc}
                 {onend}
+                mode={*mode}
+                level={*level}
             />
             if *mode == Mode::Home {
                 <div class="home-mask">

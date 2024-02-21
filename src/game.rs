@@ -8,7 +8,7 @@ use yew_autoprops::autoprops;
 
 use crate::calc::Calc;
 use crate::clone_all;
-use crate::types::{Role, Stage};
+use crate::types::{Mode, Role, Stage};
 
 #[autoprops]
 #[function_component(Game)]
@@ -17,6 +17,8 @@ pub fn game(
     init_map: Rc<Vec<usize>>,
     calc: Rc<RefCell<Calc>>,
     onend: Callback<u8>,
+    mode: &Mode,
+    level: &usize,
 ) -> Html {
     let curr_player = use_state(|| 0_u8);
     let curr_stage = use_state(|| Stage::Waiting);
@@ -134,10 +136,13 @@ pub fn game(
     };
 
     {
-        clone_all![curr_stage, curr_player, players, map, calc, onclick,];
+        clone_all![curr_stage, curr_player, players, map, calc, onclick, level];
         use_effect_with(*curr_stage, move |&stage| {
             if players[*curr_player as usize] == Role::AI && stage == Stage::Waiting {
-                let (i1, i2, j1, j2) = calc.borrow_mut().play(&map, 1.0);
+                let (i1, i2, j1, j2) = calc.borrow_mut().play(
+                    &map,
+                    level as f64 / 10.0 + 0.max(10 - map.iter().sum::<usize>()) as f64 / 10.0,
+                );
                 log!(i1, i2, j1, j2);
 
                 Timeout::new(1000, move || onclick.emit((i1, j1, Some((i2, j2))))).forget();
@@ -147,6 +152,9 @@ pub fn game(
 
     html! {
         <div class="game-container">
+            if *mode == Mode::Pve {
+                <div class="level">{ format!("Level {}", *level) }</div>
+            }
             <h1>
                 {
                     if let Some(winner) = winner.as_ref() {

@@ -3,13 +3,24 @@ body {
 }
 
 .game-container {
-  margin: 50px auto 0;
+  position: relative;
+  margin: 15px auto 0;
   width: fit-content;
   height: calc(100vh - 150px);
   text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.game-container > h1 {
+  margin: 35px 0 0;
+}
+
+.level {
+  position: absolute;
+  right: 10px;
+  top: 2px;
 }
 
 .map {
