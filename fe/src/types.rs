@@ -1,3 +1,5 @@
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 use yew::html::ImplicitClone;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -34,3 +36,10 @@ pub enum Mode {
 
 impl ImplicitClone for Role {}
 impl ImplicitClone for Mode {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Record {
+    name: String,
+    score: i32,
+    time: Option<NaiveDateTime>,
+}

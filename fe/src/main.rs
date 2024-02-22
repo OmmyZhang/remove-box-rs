@@ -1,14 +1,19 @@
 use web_sys::window;
-use yew::{function_component, html, use_memo, use_mut_ref, use_state, Callback, Html, Renderer};
+use yew::{
+    function_component, html, use_effect_with, use_memo, use_mut_ref, use_state, Callback, Html,
+    Renderer,
+};
 
 use calc::Calc;
 use game::Game;
 use gloo_console::log;
+use services::get_record_list;
 use types::{Mode, Role};
 
 mod calc;
 mod cards;
 mod game;
+mod services;
 mod types;
 
 const WIDTH: usize = 7;
@@ -38,6 +43,22 @@ fn app() -> Html {
 
     let n_hint = use_state(|| 0);
     let n_undo = use_state(|| 0);
+
+    let record_list = use_state(|| None);
+    let show_record_list = use_state(|| false);
+
+    {
+        clone_all![record_list];
+        use_effect_with(*show_record_list, |&show| {
+            if show && record_list.is_none() {
+                wasm_bindgen_futures::spawn_local(async move {
+                    if let Ok(list) = get_record_list().await {
+                        record_list.set(Some(list))
+                    }
+                });
+            }
+        });
+    }
 
     let status = calc.borrow().encode_map(&init_map);
     let first_can_win = calc.borrow_mut().check_can_win(status);
@@ -133,7 +154,12 @@ fn app() -> Html {
                             { "Local Multiplayer" }
                         </button>
                         <button>{ "Online" }</button>
-                        <button>{ "Leaderboard" }</button>
+                        <button onclick={{
+                            clone_all![show_record_list];
+                            Callback::from(move |_| show_record_list.set(!*show_record_list))
+                        }}>
+                            { "Leaderboard" }
+                        </button>
                     </div>
                 </div>
             }
