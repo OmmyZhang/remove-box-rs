@@ -16,3 +16,4 @@ gloo-net = "0.5"
 serde = { version = "1.0", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 wasm-bindgen-futures = "0.4.41"
+ring = { version="0.17.8", features = ["wasm32_unknown_unknown_js"] }
