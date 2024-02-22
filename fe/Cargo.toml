@@ -1,5 +1,5 @@
 [package]
-name = "remove-box-rs"
+name = "remove-box-fe"
 version = "0.1.0"
 edition = "2021"
 
