@@ -168,7 +168,7 @@ pub fn game(
                     .borrow_mut()
                     .play(
                         &map,
-                        level as f64 / 10.0 + 0.max(10 - map.iter().sum::<usize>()) as f64 / 10.0,
+                        (level + 10 - 10.min(map.iter().sum::<usize>())) as f64 / 10.0,
                     )
                     .0;
 
