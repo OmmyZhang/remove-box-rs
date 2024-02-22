@@ -11,3 +11,5 @@ serde = { version = "1.0", features = ["derive"] }
 shuttle-actix-web = "0.39.0"
 shuttle-runtime = "0.39.0"
 tokio = "1.26.0"
+shuttle-shared-db = { version = "0.39.0", features = ["postgres", "sqlx"] }
+sqlx = { version = "0.7.3", features = ["chrono"] }
