@@ -1,17 +1,17 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::web::{scope, ServiceConfig};
+use shuttle_actix_web::ShuttleActixWeb;
 
 mod record;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new().service(
-            web::scope("/api/record")
+#[shuttle_runtime::main]
+async fn main() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    let config = move |cfg: &mut ServiceConfig| {
+        cfg.service(
+            scope("/api/record")
                 .service(record::upload)
                 .service(record::list),
-        )
-    })
-    .bind(("127.0.0.1", 9876))?
-    .run()
-    .await
+        );
+    };
+
+    Ok(config.into())
 }
