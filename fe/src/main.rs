@@ -95,7 +95,7 @@ fn app() -> Html {
     };
 
     html! {
-        <div>
+        <>
             <Game
                 key={status}
                 {players}
@@ -137,7 +137,7 @@ fn app() -> Html {
                     </div>
                 </div>
             }
-        </div>
+        </>
     }
 }
 
