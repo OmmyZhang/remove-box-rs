@@ -91,7 +91,11 @@ pub fn game(
                     chosen_range.set(Some((start_i, end_i, min_j, max_j)));
 
                     if (start_i..=end_i).all(|i| map[i] > max_j) {
-                        chosen_state.set("green");
+                        chosen_state.set(if *curr_player == 0 {
+                            "success1"
+                        } else {
+                            "success2"
+                        });
                         clone_all![
                             chosen_range,
                             curr_stage,
@@ -141,7 +145,7 @@ pub fn game(
                         })
                         .forget();
                     } else {
-                        chosen_state.set("red");
+                        chosen_state.set("failed");
                         clone_all![chosen_range, curr_stage, pressed1, pressed2];
                         Timeout::new(500, move || {
                             chosen_range.set(None);
@@ -269,7 +273,7 @@ pub fn game(
                                                     "box-wrapper",
                                                     chosen_range.as_ref().and_then(|&(i1, i2, j1, j2)| {
                                                         (i1 <= i && i <= i2 && j1 <= j && j <= j2)
-                                                            .then_some(*chosen_state)
+                                                            .then_some(["blink", *chosen_state])
                                                     }),
                                                 )}
                                             >
