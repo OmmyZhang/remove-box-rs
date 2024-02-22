@@ -9,6 +9,9 @@ jobs:
   gh_pages:
     runs-on: ubuntu-latest
     permissions: write-all
+    defaults:
+      run:
+        working-directory: ./fe
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
