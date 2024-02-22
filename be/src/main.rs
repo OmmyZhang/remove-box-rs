@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::web::{scope, Data, ServiceConfig};
 use shuttle_actix_web::ShuttleActixWeb;
 use shuttle_runtime::CustomError;
@@ -14,8 +15,13 @@ async fn main(
         .map_err(CustomError::new)?;
 
     let config = move |cfg: &mut ServiceConfig| {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allowed_methods(["GET", "POST"])
+            .allowed_headers(["sig", "sig-t"]);
         cfg.service(
             scope("/api/record")
+                .wrap(cors)
                 .service(record::upload)
                 .service(record::list)
                 .app_data(Data::new(pool)),
