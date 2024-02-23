@@ -11,6 +11,8 @@ mod sig;
 async fn main(
     #[shuttle_shared_db::Postgres] pool: PgPool,
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+
+    #[cfg(debug_assertions)]
     pool.execute(include_str!("../schema.sql"))
         .await
         .map_err(CustomError::new)?;
