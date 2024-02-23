@@ -6,6 +6,7 @@ on:
       - 'master'
     paths:
       - 'fe/**'
+      - '.github/workflows/deploy_fe.yml'
 
 env:
   API_BASE: 'https://remove-box-rs.shuttleapp.rs/api'
