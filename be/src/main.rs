@@ -18,7 +18,7 @@ async fn main(
         let cors = Cors::default()
             .allow_any_origin()
             .allowed_methods(["GET", "POST"])
-            .allowed_headers(["sig", "sig-t"]);
+            .allowed_headers(["content-type", "sig", "sig-t"]);
         cfg.service(
             scope("/api/record")
                 .wrap(cors)

@@ -39,7 +39,7 @@ impl ImplicitClone for Mode {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Record {
-    name: String,
-    score: i32,
-    time: Option<NaiveDateTime>,
+    pub name: String,
+    pub score: i32,
+    pub time: Option<NaiveDateTime>,
 }

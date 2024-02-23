@@ -6,9 +6,8 @@ use yew::{
 
 use calc::Calc;
 use game::Game;
-use gloo_console::log;
-use services::get_record_list;
-use types::{Mode, Role};
+use services::{get_record_list, upload_record};
+use types::{Mode, Record, Role};
 
 mod calc;
 mod cards;
@@ -52,8 +51,9 @@ fn app() -> Html {
         use_effect_with(*show_record_list, |&show| {
             if show && record_list.is_none() {
                 wasm_bindgen_futures::spawn_local(async move {
-                    if let Ok(list) = get_record_list().await {
-                        record_list.set(Some(list))
+                    match get_record_list().await {
+                        Ok(list) => record_list.set(Some(list)),
+                        Err(msg) => window().unwrap().alert_with_message(&msg).unwrap(),
                     }
                 });
             }
@@ -78,7 +78,7 @@ fn app() -> Html {
     };
 
     let onend = {
-        clone_all![mode, level];
+        clone_all![mode, level, record_list];
         Callback::from(move |winner: u8| {
             match *mode {
                 Mode::Home => level.set((*level + 1) % 20),
@@ -87,13 +87,28 @@ fn app() -> Html {
                     if players[winner as usize] == Role::Local {
                         level.set(*level + 1);
                     } else {
+                        let level: usize = *level;
                         mode.set(Mode::Home);
-                        if *level > 1 {
+                        if level > 1 {
                             let user_name = window()
                                 .unwrap()
-                                .prompt_with_message(&format!("Level {}!\nYour name:", *level - 1))
+                                .prompt_with_message(&format!("Level {}!\nYour name:", level - 1))
                                 .unwrap();
-                            log!(user_name);
+                            let Some(user_name) = user_name else { return };
+
+                            clone_all![record_list];
+                            wasm_bindgen_futures::spawn_local(async move {
+                                match upload_record(Record {
+                                    name: user_name,
+                                    score: level as i32 - 1,
+                                    time: None,
+                                })
+                                .await
+                                {
+                                    Ok(list) => record_list.set(Some(list)),
+                                    Err(msg) => window().unwrap().alert_with_message(&msg).unwrap(),
+                                }
+                            })
                         }
                     }
                 }

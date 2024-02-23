@@ -14,6 +14,8 @@ gloo-timers = "0.3"
 gloo-console = "0.3"
 gloo-net = "0.5"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 wasm-bindgen-futures = "0.4.41"
 ring = { version="0.17.8", features = ["wasm32_unknown_unknown_js"] }
+once_cell = "1.19"
