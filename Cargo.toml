@@ -2,5 +2,6 @@
 members = [
   "fe",
   "be",
+  "sig",
 ]
 resolver = "2"

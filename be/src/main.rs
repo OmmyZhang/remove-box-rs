@@ -5,6 +5,7 @@ use shuttle_runtime::CustomError;
 use sqlx::{Executor, PgPool};
 
 mod record;
+mod sig;
 
 #[shuttle_runtime::main]
 async fn main(

@@ -1,5 +1,5 @@
 use actix_web::{
-    error::ErrorBadRequest,
+    error::{ErrorBadRequest, ErrorUnauthorized},
     get, post,
     web::{Data, Json},
     Result,
@@ -7,6 +7,10 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, PgPool};
+
+use sig::hmac_sign;
+
+use crate::sig::{SigInfo, KEY};
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub struct Record {
@@ -16,7 +20,15 @@ pub struct Record {
 }
 
 #[post("/upload")]
-pub async fn upload(record: Json<Record>, pool: Data<PgPool>) -> Result<Json<Vec<Record>>> {
+pub async fn upload(
+    record: Json<Record>,
+    pool: Data<PgPool>,
+    sig_info: SigInfo,
+) -> Result<Json<Vec<Record>>> {
+    if sig_info.sig != hmac_sign(sig_info.t, &record, &KEY) {
+        return Err(ErrorUnauthorized("sig wrong"));
+    }
+
     sqlx::query(
         "INSERT INTO records(name, score) VALUES ($1, $2)
             ON CONFLICT (name)
@@ -40,6 +52,10 @@ async fn query_records_by_score(pool: &PgPool) -> Result<Vec<Record>> {
 }
 
 #[get("/list")]
-pub async fn list(pool: Data<PgPool>) -> Result<Json<Vec<Record>>> {
+pub async fn list(pool: Data<PgPool>, sig_info: SigInfo) -> Result<Json<Vec<Record>>> {
+    if sig_info.sig != hmac_sign(sig_info.t, "list", &KEY) {
+        return Err(ErrorUnauthorized("sig wrong"));
+    }
+
     query_records_by_score(&pool).await.map(Json)
 }
