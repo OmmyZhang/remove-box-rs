@@ -94,25 +94,43 @@ fn app() -> Html {
                     if players[winner as usize] == Role::Local {
                         level.set(*level + 1);
                     } else {
-                        let level: usize = *level;
+                        let score = *level as i32 - 1;
                         mode.set(Mode::Home);
-                        if level > 1 {
-                            let user_name = window()
+                        if score > 1 {
+                            let storage = window().unwrap().local_storage().unwrap().unwrap();
+                            let best_score: i32 = storage
+                                .get_item("best_score")
                                 .unwrap()
-                                .prompt_with_message(&format!("Level {}!\nYour name:", level - 1))
+                                .and_then(|s| s.parse().ok())
+                                .unwrap_or_default();
+                            let last_name: String =
+                                storage.get_item("last_name").unwrap().unwrap_or_default();
+                            if score <= best_score {
+                                return;
+                            };
+
+                            let name = window()
+                                .unwrap()
+                                .prompt_with_message_and_default(
+                                    &format!("Level {}!\nYour name:", score),
+                                    &last_name,
+                                )
                                 .unwrap();
-                            let Some(user_name) = user_name
+                            let Some(name) = name
                                 .map(|name| name.chars().take(30).collect::<String>())
                                 .and_then(|name| (!name.is_empty()).then_some(name))
                             else {
                                 return;
                             };
 
+                            storage.set_item("best_score", &score.to_string()).unwrap();
+                            storage.set_item("last_name", &name).unwrap();
+
                             clone_all![record_list];
                             wasm_bindgen_futures::spawn_local(async move {
                                 match upload_record(Record {
-                                    name: user_name,
-                                    score: level as i32 - 1,
+                                    name,
+                                    score,
                                     time: None,
                                 })
                                 .await
