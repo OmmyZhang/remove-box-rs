@@ -1,14 +1,18 @@
+use std::rc::Rc;
+
 use web_sys::window;
 use yew::{
     function_component, html, use_effect_with, use_memo, use_mut_ref, use_state, Callback, Html,
     Renderer,
 };
 
+use board::Board;
 use calc::Calc;
 use game::Game;
 use services::{get_record_list, upload_record};
 use types::{Mode, Record, Role};
 
+mod board;
 mod calc;
 mod cards;
 mod game;
@@ -94,7 +98,12 @@ fn app() -> Html {
                                 .unwrap()
                                 .prompt_with_message(&format!("Level {}!\nYour name:", level - 1))
                                 .unwrap();
-                            let Some(user_name) = user_name else { return };
+                            let Some(user_name) = user_name
+                                .map(|name| name.chars().take(30).collect::<String>())
+                                .and_then(|name| (!name.is_empty()).then_some(name))
+                            else {
+                                return;
+                            };
 
                             clone_all![record_list];
                             wasm_bindgen_futures::spawn_local(async move {
@@ -148,34 +157,43 @@ fn app() -> Html {
             if *mode == Mode::Home {
                 <div class="home-mask">
                     <div class="home-buttons">
-                        <button onclick={{
-                            clone_all![mode, level, n_hint, n_undo];
-                            Callback::from(move |_| {
-                                mode.set(Mode::Pve);
-                                level.set(1);
-                                n_hint.set(N_HINT);
-                                n_undo.set(N_UNDO);
-                            })
-                        }}>
+                        <button
+                            onclick={{
+                                clone_all![mode, level, n_hint, n_undo];
+                                Callback::from(move |_| {
+                                    mode.set(Mode::Pve);
+                                    level.set(1);
+                                    n_hint.set(N_HINT);
+                                    n_undo.set(N_UNDO);
+                                })
+                            }}
+                        >
                             { "Play vs AI" }
                         </button>
-                        <button onclick={{
-                            clone_all![mode, level];
-                            Callback::from(move |_| {
-                                mode.set(Mode::Pvp);
-                                level.set(WIDTH);
-                            })
-                        }}>
+                        <button
+                            onclick={{
+                                clone_all![mode, level];
+                                Callback::from(move |_| {
+                                    mode.set(Mode::Pvp);
+                                    level.set(WIDTH);
+                                })
+                            }}
+                        >
                             { "Local Multiplayer" }
                         </button>
                         <button>{ "Online" }</button>
-                        <button onclick={{
-                            clone_all![show_record_list];
-                            Callback::from(move |_| show_record_list.set(!*show_record_list))
-                        }}>
+                        <button
+                            onclick={{
+                                clone_all![show_record_list];
+                                Callback::from(move |_| show_record_list.set(!*show_record_list))
+                            }}
+                        >
                             { "Leaderboard" }
                         </button>
                     </div>
+                    if *show_record_list {
+                        <Board record_list={Rc::new((*record_list).clone())} />
+                    }
                 </div>
             }
         </>
