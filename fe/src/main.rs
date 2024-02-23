@@ -51,13 +51,16 @@ fn app() -> Html {
     let show_record_list = use_state(|| false);
 
     {
-        clone_all![record_list];
+        clone_all![record_list, show_record_list];
         use_effect_with(*show_record_list, |&show| {
             if show && record_list.is_none() {
                 wasm_bindgen_futures::spawn_local(async move {
                     match get_record_list().await {
                         Ok(list) => record_list.set(Some(list)),
-                        Err(msg) => window().unwrap().alert_with_message(&msg).unwrap(),
+                        Err(msg) => {
+                            window().unwrap().alert_with_message(&msg).unwrap();
+                            show_record_list.set(false);
+                        }
                     }
                 });
             }
