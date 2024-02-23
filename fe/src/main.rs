@@ -96,19 +96,15 @@ fn app() -> Html {
                     } else {
                         let score = *level as i32 - 1;
                         mode.set(Mode::Home);
-                        if score > 1 {
-                            let storage = window().unwrap().local_storage().unwrap().unwrap();
-                            let best_score: i32 = storage
-                                .get_item("best_score")
-                                .unwrap()
-                                .and_then(|s| s.parse().ok())
-                                .unwrap_or_default();
-                            let last_name: String =
-                                storage.get_item("last_name").unwrap().unwrap_or_default();
-                            if score <= best_score {
-                                return;
-                            };
-
+                        let storage = window().unwrap().local_storage().unwrap().unwrap();
+                        let best_score: i32 = storage
+                            .get_item("best_score")
+                            .unwrap()
+                            .and_then(|s| s.parse().ok())
+                            .unwrap_or_default();
+                        let last_name: String =
+                            storage.get_item("last_name").unwrap().unwrap_or_default();
+                        if score > best_score {
                             let name = window()
                                 .unwrap()
                                 .prompt_with_message_and_default(
