@@ -7,6 +7,9 @@ on:
     paths:
       - 'fe/**'
 
+env:
+  API_BASE: 'https://remove-box-rs.shuttleapp.rs/api'
+
 jobs:
   gh_pages:
     runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ use web_sys::js_sys::Date;
 
 use crate::types::Record;
 
-const API_BASE: &str = "http://127.0.0.1:8000/api";
+const API_BASE: &str = env!("API_BASE");
 const KEY_VALUE: &str = "develop-key";
 static KEY: Lazy<hmac::Key> = Lazy::new(|| hmac::Key::new(hmac::HMAC_SHA256, KEY_VALUE.as_bytes()));
 
