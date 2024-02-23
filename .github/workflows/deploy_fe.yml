@@ -62,4 +62,4 @@ jobs:
           CHANNEL: html-beta
           ITCH_GAME: remove-box
           ITCH_USER: ymmo
-          PACKAGE: dist
+          PACKAGE: ./fe/dist
