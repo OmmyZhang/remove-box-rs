@@ -39,6 +39,9 @@ jobs:
 
   itch_io:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./fe
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
