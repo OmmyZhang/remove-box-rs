@@ -15,7 +15,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: calc(var(--1svh, 1svh) * 100 - 100px);
+  height: calc(100vh - 100px);
 }
 
 .game-main {
