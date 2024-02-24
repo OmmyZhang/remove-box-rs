@@ -37,7 +37,7 @@ pub enum Mode {
 impl ImplicitClone for Role {}
 impl ImplicitClone for Mode {}
 
-#[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, Clone)]
 pub struct Record {
     pub name: String,
     pub score: i32,

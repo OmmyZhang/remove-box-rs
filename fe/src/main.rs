@@ -96,20 +96,21 @@ fn app() -> Html {
                     } else {
                         let score = *level as i32 - 1;
                         mode.set(Mode::Home);
-                        let storage = window().unwrap().local_storage().unwrap().unwrap();
-                        let best_score: i32 = storage
-                            .get_item("best_score")
-                            .unwrap()
-                            .and_then(|s| s.parse().ok())
+                        let storage = window().unwrap().local_storage().unwrap();
+                        let last_record: Record = storage
+                            .as_ref()
+                            .and_then(|local_storage| {
+                                local_storage.get_item("remove_box_last_record").unwrap()
+                            })
+                            .and_then(|last_record| serde_json::from_str(&last_record).ok())
                             .unwrap_or_default();
-                        let last_name: String =
-                            storage.get_item("last_name").unwrap().unwrap_or_default();
-                        if score > best_score {
+
+                        if score > last_record.score {
                             let name = window()
                                 .unwrap()
                                 .prompt_with_message_and_default(
                                     &format!("Level {}!\nYour name:", score),
-                                    &last_name,
+                                    &last_record.name,
                                 )
                                 .unwrap();
                             let Some(name) = name
@@ -119,18 +120,23 @@ fn app() -> Html {
                                 return;
                             };
 
-                            storage.set_item("best_score", &score.to_string()).unwrap();
-                            storage.set_item("last_name", &name).unwrap();
+                            let record = Record {
+                                name,
+                                score,
+                                time: None,
+                            };
+                            if let Some(storage) = storage {
+                                storage
+                                    .set_item(
+                                        "remove_box_last_record",
+                                        &serde_json::to_string(&record).unwrap(),
+                                    )
+                                    .unwrap();
+                            }
 
                             clone_all![record_list];
                             wasm_bindgen_futures::spawn_local(async move {
-                                match upload_record(Record {
-                                    name,
-                                    score,
-                                    time: None,
-                                })
-                                .await
-                                {
+                                match upload_record(record).await {
                                     Ok(list) => record_list.set(Some(list)),
                                     Err(msg) => window().unwrap().alert_with_message(&msg).unwrap(),
                                 }
