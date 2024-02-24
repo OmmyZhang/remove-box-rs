@@ -220,8 +220,13 @@ body {
   word-break: break-all;
 }
 
+.secondary-text {
+  color: grey;
+  font-size: 80%;
+}
+
 .record-table td {
-  padding: 10px;
+  padding: 7px;
 }
 
 .alert {

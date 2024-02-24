@@ -20,7 +20,7 @@ pub fn board(record_list: Rc<Option<Vec<Record>>>) -> Html {
                                         <th scope="row">{ "#" } { idx + 1 }</th>
                                         <td class="name">{ &record.name }</td>
                                         <td>{ record.score }</td>
-                                        <td>
+                                        <td class="secondary-text">
                                             {
                                                 record.time.unwrap().format("%Y-%m-%d").to_string()
                                             }
