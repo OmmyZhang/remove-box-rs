@@ -1,7 +1,7 @@
 use implicit_clone::unsync::IString;
 use web_sys::wasm_bindgen::JsCast;
-use web_sys::{Event, EventTarget, HtmlInputElement};
-use yew::{function_component, html, use_state, Callback, Html};
+use web_sys::{Event, EventTarget, HtmlInputElement, KeyboardEvent};
+use yew::{function_component, html, use_effect_with, use_node_ref, use_state, Callback, Html};
 use yew_autoprops::autoprops;
 
 const MAX_INPUT_LEN: usize = 30;
@@ -32,8 +32,17 @@ pub fn prompt(
     let on_cancel = callback.reform(|_| None);
     let on_submit = {
         let value = value.clone();
+        let callback = callback.clone();
         Callback::from(move |_| {
             if !value.is_empty() {
+                callback.emit(Some(value.to_string()));
+            }
+        })
+    };
+    let onkeypress = {
+        let value = value.clone();
+        Callback::from(move |event: KeyboardEvent| {
+            if event.key_code() == 13 && !value.is_empty() {
                 callback.emit(Some(value.to_string()));
             }
         })
@@ -52,6 +61,15 @@ pub fn prompt(
         })
     };
 
+    let input_ref = use_node_ref();
+    {
+        let input_ref = input_ref.clone();
+        use_effect_with(input_ref, |input_ref| {
+            let input = input_ref.cast::<HtmlInputElement>().unwrap();
+            input.select();
+        });
+    }
+
     html! {
         <div class="prompt-mask">
             <div class="prompt">
@@ -62,7 +80,9 @@ pub fn prompt(
                 <input
                     value={(*value).clone()}
                     placeholder={placeholder}
+                    ref={input_ref}
                     {onchange}
+                    {onkeypress}
                 />
                 <div class="buttons">
                     <button onclick={on_cancel}>{ "❌" }</button>

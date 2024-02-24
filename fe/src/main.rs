@@ -55,7 +55,7 @@ fn app() -> Html {
 
     let alert_text = use_state(|| None);
 
-    let prompt_text = use_state(|| IString::from("Todo"));
+    let prompt_text = use_state(|| IString::from(""));
     let prompt_default = use_state(|| IString::from(""));
     let prompt_callback = use_state(|| None);
 
