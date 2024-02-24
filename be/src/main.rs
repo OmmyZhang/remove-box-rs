@@ -1,5 +1,6 @@
 use actix_cors::Cors;
 use actix_web::web::{scope, Data, ServiceConfig};
+use ring::hmac;
 use shuttle_actix_web::ShuttleActixWeb;
 use shuttle_runtime::CustomError;
 use sqlx::{Executor, PgPool};
@@ -20,11 +21,14 @@ async fn main(
             .allow_any_origin()
             .allowed_methods(["GET", "POST"])
             .allowed_headers(["content-type", "sig", "sig-t"]);
+        let key_value = std::env::var("KEY_VALUE").unwrap();
+        let key = hmac::Key::new(hmac::HMAC_SHA256, key_value.as_bytes());
         cfg.service(
             scope("/api/record")
                 .wrap(cors)
                 .service(record::upload)
                 .service(record::list)
+                .app_data(Data::new(key))
                 .app_data(Data::new(pool)),
         );
     };

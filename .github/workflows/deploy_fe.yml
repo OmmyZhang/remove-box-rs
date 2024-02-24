@@ -11,6 +11,7 @@ on:
 
 env:
   API_BASE: 'https://remove-box-rs.shuttleapp.rs/api'
+  KEY_VALUE: '${{ secrets.KEY_VALUE }}'
 
 jobs:
   gh_pages:

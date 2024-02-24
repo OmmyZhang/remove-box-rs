@@ -4,13 +4,14 @@ use actix_web::{
     web::{Data, Json},
     Result,
 };
+use ring::hmac;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, PgPool};
 
 use sig::hmac_sign;
 
-use crate::sig::{SigInfo, KEY};
+use crate::sig::SigInfo;
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub struct Record {
@@ -23,9 +24,10 @@ pub struct Record {
 pub async fn upload(
     record: Json<Record>,
     pool: Data<PgPool>,
+    key: Data<hmac::Key>,
     sig_info: SigInfo,
 ) -> Result<Json<Vec<Record>>> {
-    if sig_info.sig != hmac_sign(sig_info.t, &record, &KEY) {
+    if sig_info.sig != hmac_sign(sig_info.t, &record, &key) {
         return Err(ErrorUnauthorized("sig wrong"));
     }
 
@@ -52,8 +54,12 @@ async fn query_records_by_score(pool: &PgPool) -> Result<Vec<Record>> {
 }
 
 #[get("/list")]
-pub async fn list(pool: Data<PgPool>, sig_info: SigInfo) -> Result<Json<Vec<Record>>> {
-    if sig_info.sig != hmac_sign(sig_info.t, "list", &KEY) {
+pub async fn list(
+    pool: Data<PgPool>,
+    key: Data<hmac::Key>,
+    sig_info: SigInfo,
+) -> Result<Json<Vec<Record>>> {
+    if sig_info.sig != hmac_sign(sig_info.t, "list", &key) {
         return Err(ErrorUnauthorized("sig wrong"));
     }
 

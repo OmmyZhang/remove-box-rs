@@ -2,12 +2,6 @@ use sig::get_current_t;
 
 use actix_web::{dev::Payload, error::ErrorUnauthorized, Error, FromRequest, HttpRequest};
 use futures::future;
-use once_cell::sync::Lazy;
-use ring::hmac;
-
-const KEY_VALUE: &str = env!("KEY_VALUE");
-pub static KEY: Lazy<hmac::Key> =
-    Lazy::new(|| hmac::Key::new(hmac::HMAC_SHA256, KEY_VALUE.as_bytes()));
 
 #[derive(Debug)]
 pub struct SigInfo {
