@@ -18,4 +18,5 @@ jobs:
           deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
           working-directory: "be"
           cargo-shuttle-version: "0.39.0"
+          allow-dirty: "true"
           secrets: KEY_VALUE = '${{ secrets.KEY_VALUE }}'
