@@ -170,6 +170,7 @@ body {
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   background-size: 4px 5px;
+  overflow-y: auto;
 }
 
 .home-buttons {
@@ -199,12 +200,13 @@ body {
   flex-direction: column;
   align-items: center;
   margin-top: 30px;
+  padding: 0 10px;
 }
 
 .record-table {
   min-width: 272px;
-  font-size: 20px;
-  padding: 20px;
+  font-size: 17px;
+  padding: 18px;
   background: #fffd;
   border-radius: 20px;
 }
@@ -214,7 +216,7 @@ body {
 }
 
 .record-table td.name {
-  max-width: 10em;
+  max-width: 8em;
   word-break: break-all;
 }
 
