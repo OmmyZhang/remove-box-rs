@@ -9,4 +9,4 @@ Remove Box
 
 - [itch.io](https://ymmo.itch.io/remove-box)
 
-- [Github Pages](https://ommyzhang.github.io/remove-box/)
+- [Github Pages](https://ommyzhang.github.io/remove-box-rs/)
