@@ -9,6 +9,8 @@ use yew::{
 use board::Board;
 use calc::Calc;
 use game::Game;
+use implicit_clone::unsync::IString;
+use modal::{Alert, Prompt};
 use services::{get_record_list, upload_record};
 use types::{Mode, Record, Role};
 
@@ -16,6 +18,7 @@ mod board;
 mod calc;
 mod cards;
 mod game;
+mod modal;
 mod services;
 mod types;
 
@@ -50,15 +53,21 @@ fn app() -> Html {
     let record_list = use_state(|| None);
     let show_record_list = use_state(|| false);
 
+    let alert_text = use_state(|| None);
+
+    let prompt_text = use_state(|| IString::from("Todo"));
+    let prompt_default = use_state(|| IString::from(""));
+    let prompt_callback = use_state(|| None);
+
     {
-        clone_all![record_list, show_record_list];
+        clone_all![record_list, show_record_list, alert_text];
         use_effect_with(*show_record_list, |&show| {
             if show && record_list.is_none() {
                 wasm_bindgen_futures::spawn_local(async move {
                     match get_record_list().await {
                         Ok(list) => record_list.set(Some(list)),
                         Err(msg) => {
-                            window().unwrap().alert_with_message(&msg).unwrap();
+                            alert_text.set(Some(IString::from(msg)));
                             show_record_list.set(false);
                         }
                     }
@@ -85,7 +94,15 @@ fn app() -> Html {
     };
 
     let onend = {
-        clone_all![mode, level, record_list];
+        clone_all![
+            mode,
+            level,
+            record_list,
+            alert_text,
+            prompt_text,
+            prompt_default,
+            prompt_callback,
+        ];
         Callback::from(move |winner: u8| {
             match *mode {
                 Mode::Home => level.set((*level + 1) % 20),
@@ -96,51 +113,55 @@ fn app() -> Html {
                     } else {
                         let score = *level as i32 - 1;
                         mode.set(Mode::Home);
-                        let storage = window().unwrap().local_storage().unwrap();
-                        let last_record: Record = storage
-                            .as_ref()
-                            .and_then(|local_storage| {
-                                local_storage.get_item("remove_box_last_record").unwrap()
-                            })
+                        let last_record: Record = window()
+                            .unwrap()
+                            .local_storage()
+                            .unwrap()
+                            .unwrap()
+                            .get_item("remove_box_last_record")
+                            .unwrap()
                             .and_then(|last_record| serde_json::from_str(&last_record).ok())
                             .unwrap_or_default();
 
                         if score > last_record.score {
-                            let name = window()
-                                .unwrap()
-                                .prompt_with_message_and_default(
-                                    &format!("Level {}!\nYour name:", score),
-                                    &last_record.name,
-                                )
-                                .unwrap();
-                            let Some(name) = name
-                                .map(|name| name.chars().take(30).collect::<String>())
-                                .and_then(|name| (!name.is_empty()).then_some(name))
-                            else {
-                                return;
-                            };
+                            prompt_text
+                                .set(IString::from(format!("New record! Level {}.", &score)));
+                            prompt_default.set(IString::from(last_record.name.clone()));
+                            prompt_callback.set({
+                                clone_all![prompt_callback, record_list, alert_text];
+                                Some(Callback::from(move |value| {
+                                    if let Some(name) = value {
+                                        gloo_console::log!(&name);
 
-                            let record = Record {
-                                name,
-                                score,
-                                time: None,
-                            };
-                            if let Some(storage) = storage {
-                                storage
-                                    .set_item(
-                                        "remove_box_last_record",
-                                        &serde_json::to_string(&record).unwrap(),
-                                    )
-                                    .unwrap();
-                            }
+                                        let record = Record {
+                                            name,
+                                            score,
+                                            time: None,
+                                        };
+                                        window()
+                                            .unwrap()
+                                            .local_storage()
+                                            .unwrap()
+                                            .unwrap()
+                                            .set_item(
+                                                "remove_box_last_record",
+                                                &serde_json::to_string(&record).unwrap(),
+                                            )
+                                            .unwrap();
 
-                            clone_all![record_list];
-                            wasm_bindgen_futures::spawn_local(async move {
-                                match upload_record(record).await {
-                                    Ok(list) => record_list.set(Some(list)),
-                                    Err(msg) => window().unwrap().alert_with_message(&msg).unwrap(),
-                                }
-                            })
+                                        clone_all![record_list, alert_text];
+                                        wasm_bindgen_futures::spawn_local(async move {
+                                            match upload_record(record).await {
+                                                Ok(list) => record_list.set(Some(list)),
+                                                Err(msg) => {
+                                                    alert_text.set(Some(IString::from(msg)))
+                                                }
+                                            }
+                                        })
+                                    };
+                                    prompt_callback.set(None);
+                                }))
+                            });
                         }
                     }
                 }
@@ -162,8 +183,25 @@ fn app() -> Html {
         Callback::from(move |()| n_undo.set(*n_undo - 1))
     };
 
+    let closed_alert = {
+        clone_all![alert_text];
+        Callback::from(move |()| alert_text.set(None))
+    };
+
     html! {
         <>
+            if let Some(text) = alert_text.as_ref() {
+                <Alert {text} {closed_alert}/>
+            }
+            if let Some(callback) = prompt_callback.as_ref() {
+                <Prompt
+                    title={"Game Over"}
+                    text={&*prompt_text}
+                    default={&*prompt_default}
+                    placeholder={"Your name"}
+                    {callback}
+                />
+            }
             <Game
                 key={status}
                 {players}
