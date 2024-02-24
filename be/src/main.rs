@@ -1,11 +1,8 @@
 use actix_cors::Cors;
 use actix_web::web::{scope, Data, ServiceConfig};
 use shuttle_actix_web::ShuttleActixWeb;
-#[cfg(debug_assertions)]
 use shuttle_runtime::CustomError;
-#[cfg(debug_assertions)]
-use sqlx::Executor;
-use sqlx::PgPool;
+use sqlx::{Executor, PgPool};
 
 mod record;
 mod sig;
@@ -14,7 +11,6 @@ mod sig;
 async fn main(
     #[shuttle_shared_db::Postgres] pool: PgPool,
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
-    #[cfg(debug_assertions)]
     pool.execute(include_str!("../schema.sql"))
         .await
         .map_err(CustomError::new)?;
