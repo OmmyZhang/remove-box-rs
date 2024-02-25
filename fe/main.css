@@ -216,7 +216,7 @@ body {
 }
 
 .record-table td.name {
-  max-width: 8em;
+  max-width: 6em;
   word-break: break-all;
 }
 
