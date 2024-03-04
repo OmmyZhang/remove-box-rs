@@ -2,3 +2,5 @@ target
 Cargo.lock
 
 fe/dist
+
+be/Secrets.toml
