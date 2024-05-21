@@ -9,11 +9,10 @@ edition = "2021"
 actix-web = "4"
 actix-cors = "0.7"
 serde = { version = "1.0", features = ["derive"] }
-shuttle-actix-web = "0.39.0"
-shuttle-runtime = "0.39.0"
-shuttle-secrets = "0.39.0"
+shuttle-actix-web = "0.45.0"
+shuttle-runtime = "0.45.0"
 tokio = "1.26.0"
-shuttle-shared-db = { version = "0.39.0", features = ["postgres", "sqlx"] }
+shuttle-shared-db = { version = "0.45.0", features = ["postgres", "sqlx"] }
 sqlx = { version = "0.7.3", features = ["chrono"] }
 ring = "0.17.8"
 futures = "0.3.30"
